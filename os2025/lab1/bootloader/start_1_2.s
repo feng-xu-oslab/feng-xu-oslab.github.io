@@ -1,4 +1,4 @@
-/* Real Mode Hello World */
+/* Real Mode Hello World with clock func*/
  .code16
 
  .global start
@@ -15,7 +15,7 @@ start:
 	movw $0, 0x72 
 			# 设置定时器0 （8253/8254） 以产生时钟中断
     		# 发送命令字节到控制寄存器端口0x43
-    movw $0x37, %ax         #方式3 ， 用于定时产生中断00110110b
+    movw $0x36, %ax         #方式3 ， 用于定时产生中断00110110b
     movw $0x43, %dx
     out %al, %dx 
             # 计算计数值， 产生20 毫秒的时钟中断， 时钟频率为1193180 赫兹
