@@ -1,3 +1,4 @@
+/* workspace */
 /* Real Mode Hello World with clock func*/
  .code16
 
@@ -11,6 +12,7 @@ start:
 	movw %ax, %sp # setting stack pointer to 0x7d00
 	
     # DO: for clock
+	cli
 	# 设置定时器0 （8253/8254） 以产生时钟中断
 	movw $clock_handler, 0x70    
 	movw $0, 0x72 
@@ -27,62 +29,53 @@ start:
     out %al, %dx 
     mov %ah, %al
     out %al, %dx
+	sti
 
 	callw loop
 
 loop:
 	jmp loop
 
-message_a:
-	.string "0 <= counter < 100\n\0"
-
-message_b:
-	.string "100 <= counter < 200\n\0"
-
-message_c:
-	.string "counter == 200\n\0"
+message:
+	.string "counter working goooood!\n\0"
 
 counter:
 	.word 0
 
-print_line:
-	.word 0
+print_len:
+	.word 1
 
-displayStr:
- 	pushw %bp
- 	movw 4(%esp), %ax
-	movw %ax, %bp
-
- 	movw 6(%esp), %cx	# 打印的字符串长度
-	movw $0x1301, %ax	# AH=0x13 打印字符串
- 	movw $0x000c, %bx	# BH=0x00 黑底 BL=0x0c 红字
-	movw print_line, %dx	# 在第0行0列开始打印
- 	int $0x10			# 陷入0x10号中断
-
-	movw print_line, %ax
-	incw %ax
-	movw %ax, print_line
-
-  	popw %bp
-	ret
-        
-clock_handler:  
+clock_handler:
 	pushw %bp
 	pushw %ax
-	pushw %bx
 
-	# INCREASE counter
+	movw print_len, %ax
+	cmpw $25, %ax
+	je end_handler
+
+	# Increase counter
 	movw counter, %ax
 	incw %ax
 	movw %ax, counter
 
 	movw counter, %ax
-	cmpw $200, %ax
+	cmpw $50, %ax
 	jb end_handler
 
-	pushw $15
-	pushw $message_c
-	callw displayStr     
+	# Print
+	pushw %bp
+	movw $message, %ax
+	movw %ax, %bp
+	movw print_len, %cx	# 打印的字符串长度
+	movw $0x1301, %ax	# AH=0x13 打印字符串
+ 	movw $0x000c, %bx	# BH=0x00 黑底 BL=0x0c 红字
+	movw $0x0000, %dx	# 在第0行0列开始打印
+ 	int $0x10			# 陷入0x10号中断
+	popw %bp
+	# Increase length
+	movw print_len, %ax
+	incw %ax
+	movw %ax, print_len
 
 	# RESET counter		
 	movw $0, %ax
@@ -90,7 +83,6 @@ clock_handler:
 	jmp end_handler
 
 end_handler:
-	popw %bx
 	popw %ax
 	popw %bp
 	iret
