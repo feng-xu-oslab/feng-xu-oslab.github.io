@@ -95,8 +95,27 @@ void KeyboardHandle(struct TrapFrame *tf){
 		}
 	}else if(code < 0x81){ 
 		// TODO: 处理正常的字符
-		
-
+		// 注意输入的大小写的实现、不可打印字符的处理
+		char character=getChar(code);
+		if(character!=0){
+			putChar(character);//put char into serial
+			uint16_t data=character|(0x0c<<8);
+			keyBuffer[bufferTail++]=character;
+			bufferTail%=MAX_KEYBUFFER_SIZE;
+			int pos=(80*displayRow+displayCol)*2;
+			asm volatile("movw %0, (%1)"::"r"(data),"r"(pos+0xb8000));
+			displayCol+=1;
+			if(displayCol==80){
+				displayCol=0;
+				displayRow++;
+				if(displayRow==25){
+					scrollScreen();
+					displayRow=24;
+					displayCol=0;
+				}
+			}
+		}
+		// OVER TODO
 	}
 	updateCursor(displayRow, displayCol);
 
@@ -106,6 +125,7 @@ void timerHandler(struct TrapFrame *tf) {
 	// TODO
 	timeFlag = 1;
 	return;
+	// OVER
 }
 
 void syscallHandle(struct TrapFrame *tf) {
